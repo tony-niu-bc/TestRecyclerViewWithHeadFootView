@@ -83,8 +83,9 @@ public class RecyclerViewWithHeadFootView extends RecyclerView {
             // dy 为滑动过度时每毫秒拉伸的距离，正数表示向上拉伸，负数表示向下拉伸
             if (!mIsLoadingData
              && mIsTouching
-             && ((dy < 0 && mHeadView.getHeight() < mHeadViewMaxHeight)
-              || (dy > 0 && mHeadView.getHeight() > mHeadViewDefaultHeight))) {
+             && (dy < 0)
+             && (mHeadView.getHeight() < mHeadViewMaxHeight)) {
+//              || (dy > 0 && mHeadView.getHeight() > mHeadViewDefaultHeight))) {
                 mHandler.obtainMessage(0, dy, 0, null)
                         .sendToTarget();
             }
@@ -123,11 +124,13 @@ public class RecyclerViewWithHeadFootView extends RecyclerView {
 
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            if (viewType == mHeadView.getClass().getCanonicalName().hashCode()) {
-                return new HeadOrFootViewHolder(mHeadView);
+            if (viewType == HeadViewHolder.class.getCanonicalName().hashCode()) {
+                Log.e("RecyclerHeadFoot", "onCreateViewHolder - HeadOrFootViewHolder(mHeadView) - " + viewType);
+                return new HeadViewHolder(mHeadView);
             }
-            else if (viewType == mFootView.getClass().getCanonicalName().hashCode()) {
-                return new HeadOrFootViewHolder(mFootView);
+            else if (viewType == FootViewHolder.class.getCanonicalName().hashCode()) {
+                Log.e("RecyclerHeadFoot", "onCreateViewHolder - HeadOrFootViewHolder(mFootView) - " + viewType);
+                return new FootViewHolder(mFootView);
             }
 
             return mAdapter.onCreateViewHolder(parent, viewType);
@@ -149,18 +152,26 @@ public class RecyclerViewWithHeadFootView extends RecyclerView {
         @Override
         public int getItemViewType(int position) {
             if (isHeader(position)) {
-                return mHeadView.getClass().getCanonicalName().hashCode();
+                Log.e("RecyclerHeadFoot", "onCreateViewHolder - isHeader(position) - " + HeadViewHolder.class.getCanonicalName().hashCode());
+                return HeadViewHolder.class.getCanonicalName().hashCode();
             }
 
             if (isFooter(position)) {
-                return mFootView.getClass().getCanonicalName().hashCode();
+                Log.e("RecyclerHeadFoot", "onCreateViewHolder - isFooter(position) - " + FootViewHolder.class.getCanonicalName().hashCode());
+                return FootViewHolder.class.getCanonicalName().hashCode();
             }
 
             return mAdapter.getItemViewType(position - 1);
         }
 
-        private class HeadOrFootViewHolder extends RecyclerView.ViewHolder {
-            HeadOrFootViewHolder(View itemView) {
+        private class HeadViewHolder extends RecyclerView.ViewHolder {
+            HeadViewHolder(View itemView) {
+                super(itemView);
+            }
+        }
+
+        private class FootViewHolder extends RecyclerView.ViewHolder {
+            FootViewHolder(View itemView) {
                 super(itemView);
             }
         }
@@ -220,7 +231,7 @@ public class RecyclerViewWithHeadFootView extends RecyclerView {
         // 此例子的 Head View 为 130 dp
         mHeadViewMaxHeight = DimensionUtil.dip2px(mContext, 130);
 
-        mFootView = LayoutInflater.from(mContext).inflate(R.layout.footer_view, null);
+        mFootView = LayoutInflater.from(mContext).inflate(R.layout.footer_view, this, false);
 
         // 使用包装了头部和脚部的适配器
         Adapter mWrapAdapter = new WrapAdapter(adapter);
@@ -243,14 +254,15 @@ public class RecyclerViewWithHeadFootView extends RecyclerView {
             // 获取最后一个正在显示的条目位置
             int lastVisibleItemPosition = ((MyLinearLayoutManager)getLayoutManager()).findLastVisibleItemPosition();
 
-            Log.e("RecyclerHeadFoot",
-                  "onScrollStateChanged - getLayoutManager().getChildCount() = " + getLayoutManager().getChildCount() + "\n" +
-                  "lastVisibleItemPosition = " + lastVisibleItemPosition + "\n");
+//            Log.e("RecyclerHeadFoot",
+//                  "onScrollStateChanged - getLayoutManager().getChildCount() = " + getLayoutManager().getChildCount() + "\n" +
+//                  "lastVisibleItemPosition = " + lastVisibleItemPosition + "\n");
 
             if ((getLayoutManager().getChildCount() > 0)
              && (lastVisibleItemPosition >= (getLayoutManager().getItemCount() - 1))) {
                 mFootView.setVisibility(VISIBLE);
-                mFootView.requestLayout();
+
+//                Log.e("RecyclerHeadFoot", "onScrollStateChanged - Prepare to load more!");
 
                 // 加载更多
                 mIsLoadingData = true;
